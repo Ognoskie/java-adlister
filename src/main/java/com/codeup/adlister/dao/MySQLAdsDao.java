@@ -28,11 +28,14 @@ public class MySQLAdsDao implements Ads {
 
     @Override
     public List<Ad> all() {
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM ads");
+            stmt = connection.createStatement("SELECT * FROM ads");
+//            ResultSet rs = stmt.executeQuery("SELECT * FROM ads");
+            ResultSet rs = stmt.executeQuery();
             return createAdsFromResults(rs);
+
+
         } catch (SQLException e) {
             throw new RuntimeException("Error retrieving all ads.", e);
         }
@@ -40,12 +43,32 @@ public class MySQLAdsDao implements Ads {
 
     @Override
     public Long insert(Ad ad) {
+        String sqlQuery = "INSERT INTO ads (user_id, title, description) VALUES (?, ?, ?)";
         try {
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate(createInsertQuery(ad), Statement.RETURN_GENERATED_KEYS);
-            ResultSet rs = stmt.getGeneratedKeys();
-            rs.next();
-            return rs.getLong(1);
+//            Statement stmt = connection.createStatement();
+//            stmt.executeUpdate(createInsertQuery(ad), Statement.RETURN_GENERATED_KEYS);
+//            ResultSet rs = stmt.getGeneratedKeys();
+//            rs.next();
+//            return rs.getLong(1);
+
+           PreparedStatement statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
+           statement.setLong(1, ad.getUserId());
+           statement.setString(2, ad.getTitle());
+           statement.setString(3, ad.getDescription());
+
+           statement.executeUpdate();
+
+           ResultSet rs = statement.getGeneratedKeys();
+
+//           rs.next();
+//           return rs.getLong(1);
+
+            if (rs.next()) {
+                return rs.getLong(1);
+            } else {
+                return -1L;
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException("Error creating a new ad.", e);
         }
